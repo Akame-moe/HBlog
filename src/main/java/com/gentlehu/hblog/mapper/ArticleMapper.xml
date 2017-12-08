@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gentlehu.hblog.mapper.ArticleMapper">
+
+    <resultMap id="articleMap" type="com.gentlehu.hblog.pojo.Article">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="postdate" property="postdate"/>
+        <collection property="tags" column="id" ofType="com.gentlehu.hblog.pojo.Tag" javaType="java.util.ArrayList" select="findArticleTags">
+            <id property="id" column="tag_id"/>
+        </collection>
+    </resultMap>
+
+
+    <sql id="all_column">id,title,content,postdate</sql>
+    <sql id="all_column_except_id">title,content,postdate</sql>
+
+    <insert id="insert" parameterType="com.gentlehu.hblog.pojo.Article" useGeneratedKeys="true">
+        <selectKey keyColumn="id" keyProperty="id" resultType="int">
+            select last_insert_id()
+        </selectKey>
+        insert into article(<include refid="all_column_except_id"/>)
+        value(#{title},#{content},#{postdate})
+    </insert>
+    <select id="findById" parameterType="int" resultMap="articleMap">
+        select id,title,content,postdate
+        from article
+        where id = #{id}
+    </select>
+
+    <select id="findArticleTags" parameterType="int" resultType="com.gentlehu.hblog.pojo.Tag">
+       select id,name from tag where id in (select tag_id from article_tag where article_id = #{id})
+    </select>
+
+    <update id="update" parameterType="com.gentlehu.hblog.pojo.Article">
+        update article
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            <if test="postdate != null">
+                postdate = #{postdate},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        delete from article where id = #{id}
+    </delete>
+
+    <select id="getCount">
+        select count(*) total from article
+    </select>
+</mapper>
